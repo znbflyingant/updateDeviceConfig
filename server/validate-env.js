@@ -28,7 +28,9 @@ const ENV_VARS = {
   server: {
     PORT: { required: false, default: '3001', description: '服务器端口' },
     NODE_ENV: { required: false, default: 'development', description: '运行环境' },
-    FRONTEND_URL: { required: false, default: 'http://localhost:3000', description: '前端URL' }
+    FRONTEND_URL: { required: false, default: 'http://localhost:3000', description: '前端URL' },
+    DEBUG: { required: false, default: 'false', description: '调试模式（true/false）' },
+    ALLOWED_ORIGINS: { required: false, description: 'CORS 允许的跨域来源（逗号分隔）' }
   },
   
   // OSS配置
@@ -83,6 +85,12 @@ function validateEnvironment() {
           ? `${value.substring(0, 8)}...` 
           : value;
         console.log(chalk.green(`  ✅ ${varName}: ${displayValue} - ${config.description}`));
+
+        // 对 ALLOWED_ORIGINS 进行解析展示，便于核对
+        if (varName === 'ALLOWED_ORIGINS') {
+          const list = value.split(',').map(s => s.trim()).filter(Boolean);
+          console.log(chalk.gray(`     → Parsed origins: ${list.length ? list.join(' | ') : '(empty)'}`));
+        }
       } else {
         console.log(chalk.gray(`  ⭕ ${varName}: 未设置 - ${config.description}`));
       }

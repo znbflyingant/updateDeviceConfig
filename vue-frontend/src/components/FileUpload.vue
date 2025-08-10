@@ -256,7 +256,7 @@ async function handleSubmit() {
     // 调用后端更新华为云配置，并展示结果
     try {
       progressMsg.value = '正在更新远程配置...'
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/huawei/update-config`, {
+      const res = await fetch(`${(import.meta.env as any).VITE_API_BASE_URL}/api/huawei/update-config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: 'device_upgrade_info', content: result })

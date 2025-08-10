@@ -31,7 +31,7 @@ const logger = {
 };
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 // 解析允许的跨域源
 function parseAllowedOrigins() {
