@@ -3,7 +3,16 @@ import CryptoJS from 'crypto-js'
 import type { UploadProgress, StsToken, ApiResponse } from '../types'
 
 class OSSUploader {
-  private baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+  private rawBase = (import.meta.env as any).VITE_API_BASE_URL
+
+  // 规范化 API 基础地址：
+  // - 支持传入根地址（如 http://localhost:3001）
+  // - 也支持直接传入包含 /api 的地址（如 https://api.example.com/api）
+  private getApiBase(): string {
+    const base = this.rawBase.replace(/\/$/, '')
+    const endsWithApi = /\/api$/i.test(base)
+    return endsWithApi ? base : `${base}/api`
+  }
 
   // 计算文件MD5（返回大写十六进制）
   async calculateMD5(file: Blob): Promise<string> {
@@ -48,7 +57,7 @@ class OSSUploader {
     if (updateLog) form.append('updateLog', updateLog)
     if (md5s && md5s.length) form.append('md5s', JSON.stringify(md5s))
 
-    const uploadUrl = `${this.baseURL}/api/oss/upload-batch`;
+    const uploadUrl = `${this.getApiBase()}/oss/upload-batch`;
 
     const resp = await axios.post<ApiResponse>(uploadUrl, form, {
       // 注意：不要手动设置 Content-Type，浏览器会自动附带 boundary

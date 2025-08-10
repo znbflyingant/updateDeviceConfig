@@ -33,12 +33,31 @@ const logger = {
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// 解析允许的跨域源
+function parseAllowedOrigins() {
+  const raw = process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || '';
+  const list = raw
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+  return list;
+}
+
+const allowedOrigins = parseAllowedOrigins();
+logger.debug('CORS allowed origins parsed', { allowedOrigins });
+
 // 中间件配置
 app.use(helmet());
 app.use(compression());
 app.use(morgan('combined'));
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: (origin, callback) => {
+    // 允许无来源的请求（如移动端/同源请求）
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.length === 0) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
   credentials: true
 }));
 app.use(bodyParser.json());

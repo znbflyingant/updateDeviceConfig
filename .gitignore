@@ -195,6 +195,9 @@ build/Release
 .npm
 *.tgz
 
+# Vercel local project metadata
+.vercel/
+
 # ESLint
 .eslintcache
 

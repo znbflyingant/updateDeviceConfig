@@ -9,7 +9,8 @@
 NODE_ENV=production          # 运行环境 (development/production)
 PORT=3001                   # 服务器端口 (Railway会自动设置)
 DEBUG=false                 # 调试模式
-FRONTEND_URL=https://your-vercel-app.vercel.app  # 前端URL
+FRONTEND_URL=https://updatebin.vercel.app  # 前端URL（生产）
+ALLOWED_ORIGINS=https://updatebin.vercel.app,https://*.vercel.app,http://localhost:3000  # 允许的跨域来源
 ```
 
 ### ☁️ 阿里云OSS配置
@@ -79,6 +80,19 @@ HUAWEI_BASE_URL=https://connect-api.cloud.huawei.com                        # AP
 如果使用Vercel Serverless Functions，在Vercel Dashboard中：
 - 项目设置 → Environment Variables
 - 添加相同的环境变量
+
+### 前端（Vercel）环境隔离建议
+
+在 Vercel 的 Project Settings → Environment Variables 中分别设置：
+
+- Development:
+  - `VITE_API_BASE_URL = http://localhost:3001/api`
+- Preview:
+  - `VITE_API_BASE_URL = https://<your-staging-api>.railway.app/api`
+- Production:
+  - `VITE_API_BASE_URL = https://<your-prod-api>.railway.app/api`
+
+注意：前端只有以 `VITE_` 开头的变量会被注入构建产物，请勿放入敏感信息。
 
 ## 🔍 验证工具
 

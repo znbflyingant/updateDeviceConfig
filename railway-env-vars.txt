@@ -22,8 +22,11 @@ HUAWEI_PRODUCT_ID=461323198429896966
 HUAWEI_APP_ID=114137851
 HUAWEI_BASE_URL=https://connect-api.cloud.huawei.com
 
-# 前端URL（更新为你的Vercel地址）
-FRONTEND_URL=https://updatebin-mh8g3yuqu-znbflyingants-projects.vercel.app
+# 前端URL（更新为你的Vercel生产域名）
+FRONTEND_URL=https://updatebin.vercel.app
+
+# 允许的跨域来源（逗号分隔，支持多域；建议包含生产与预览域、以及本地调试）
+ALLOWED_ORIGINS=https://updatebin.vercel.app,https://*.vercel.app,http://localhost:3000
 
 # 调试模式（可选）
 DEBUG=false
