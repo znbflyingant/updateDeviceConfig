@@ -1,0 +1,41 @@
+{
+  "name": "firmware-upgrade-server",
+  "version": "1.0.0",
+  "description": "固件升级配置管理工具后端服务",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "update": "node update-config-tool.js",
+    "validate-env": "node validate-env.js",
+    "prestart": "node validate-env.js"
+  },
+  "dependencies": {
+    "ali-oss": "^6.23.0",
+    "body-parser": "^1.20.2",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.0",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "optionalDependencies": {
+    "chalk": "^4.1.2"
+  },
+  "keywords": [
+    "firmware",
+    "upload",
+    "oss",
+    "esp32"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

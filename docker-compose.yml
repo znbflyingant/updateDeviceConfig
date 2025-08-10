@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - OSS_REGION=${OSS_REGION}
+      - OSS_ACCESS_KEY_ID=${OSS_ACCESS_KEY_ID}
+      - OSS_ACCESS_KEY_SECRET=${OSS_ACCESS_KEY_SECRET}
+      - OSS_BUCKET=${OSS_BUCKET}
+      - OSS_UPLOAD_PATH=${OSS_UPLOAD_PATH}
+      - OSS_CDN_DOMAIN=${OSS_CDN_DOMAIN}
+      - STS_ROLE_ARN=${STS_ROLE_ARN}
+      - STS_ROLE_SESSION_NAME=${STS_ROLE_SESSION_NAME}
+      - HUAWEI_APP_ID=${HUAWEI_APP_ID}
+      - HUAWEI_CLIENT_ID=${HUAWEI_CLIENT_ID}
+      - HUAWEI_CLIENT_SECRET=${HUAWEI_CLIENT_SECRET}
+      - HUAWEI_PROJECT_ID=${HUAWEI_PROJECT_ID}
+      - FRONTEND_URL=${FRONTEND_URL}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

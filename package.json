@@ -1,0 +1,29 @@
+{
+  "name": "updatebin-vercel",
+  "version": "1.0.0",
+  "description": "固件升级配置管理工具 - Vercel部署版本",
+  "main": "api/index.js",
+
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "cd vue-frontend && npm run build",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "ali-oss": "^6.23.0",
+    "crypto": "^1.0.1",
+    "multiparty": "^4.2.3"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.0.0"
+  },
+  "keywords": [
+    "firmware",
+    "upload",
+    "oss",
+    "esp32",
+    "vercel"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
