@@ -12,6 +12,7 @@ declare module 'vue' {
     AFormItem: typeof import('ant-design-vue/es')['FormItem']
     AInput: typeof import('ant-design-vue/es')['Input']
     ASpace: typeof import('ant-design-vue/es')['Space']
+    ATextarea: typeof import('ant-design-vue/es')['Textarea']
     FileUpload: typeof import('./src/components/FileUpload.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

@@ -2,12 +2,17 @@
   <div class="file-upload">
     <!-- 版本与日志输入 -->
     <div class="version-form card">
-      <a-form layout="inline">
+      <a-form layout="vertical">
         <a-form-item label="版本号">
           <a-input v-model:value="versionInput" style="width: 160px" placeholder="如 69" />
         </a-form-item>
-        <a-form-item label="更新日志">
-          <a-input v-model:value="updateLog" style="width: 460px" placeholder="更新说明" />
+        <a-form-item label="更新说明">
+          <a-textarea
+            v-model:value="updateLog"
+            :rows="6"
+            placeholder="请填写更新说明"
+            style="width: 620px"
+          />
         </a-form-item>
       </a-form>
     </div>
@@ -23,8 +28,12 @@
         <div class="upload-content">
           <CloudUploadOutlined class="upload-icon" />
           <p>点击或拖入 ESP .bin 文件</p>
-          <p class="upload-hint">当前：{{ espFile ? espFile.name : '未选择' }}</p>
+          <p v-if="!espFile" class="upload-hint">当前：未选择</p>
         </div>
+      </div>
+      <div v-if="espFile" class="esp-selected">
+        <span class="file-name">已选：{{ espFile.name }}</span>
+        <a-button size="small" danger @click="removeEsp">删除</a-button>
       </div>
       <input ref="espInput" type="file" accept=".bin" style="display:none" @change="onPick('esp', $event)" />
     </div>
@@ -161,6 +170,10 @@ const removeMb = (name: string) => {
   mainboardFiles.value = mainboardFiles.value.filter(f => f.name !== name)
 }
 
+const removeEsp = () => {
+  espFile.value = null
+}
+
 const resetAll = () => {
   versionInput.value = ''
   updateLog.value = ''
@@ -206,7 +219,7 @@ async function handleSubmit() {
   const v = assertVersion()
   if (!v) return
   if (!updateLog.value.trim()) {
-    return message.error('请填写更新日志')
+    return message.error('请填写更新说明')
   }
 
   submitting.value = true
@@ -299,6 +312,7 @@ async function handleSubmit() {
 .file-grid { display: grid; gap: 8px; }
 .file-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #f7f7f7; border-radius: 6px; }
 .file-name { color: #333; }
+.esp-selected { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding: 8px 12px; background: #f7f7f7; border-radius: 6px; }
 .actions { display: flex; justify-content: space-between; align-items: center; }
 .progress-msg { margin-top: 8px; color: #666; }
 .result-json { background: #0b1021; color: #e6f7ff; padding: 12px; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
