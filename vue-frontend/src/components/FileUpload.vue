@@ -253,6 +253,7 @@ async function handleSubmit() {
     )
     console.log("result",result);
     // 调用后端更新华为云配置，并展示结果
+    return;
     try {
       progressMsg.value = '正在更新远程配置...'
       

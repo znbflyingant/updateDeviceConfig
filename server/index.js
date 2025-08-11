@@ -231,8 +231,6 @@ app.get('/api/oss/sts', async (req, res) => {
 const headers = {
   // 指定Object的存储类型。
   'x-oss-storage-class': 'Standard',
-  // 指定Object的访问权限。
-  'x-oss-object-acl': 'private',
 };
 
 // 批量中转上传到 OSS（files[]） - 方案B：去掉 asyncHandler，自行兜底，避免重复响应
