@@ -12,6 +12,8 @@ const OSS_CONFIG = {
   // STS相关配置
   stsRoleArn: process.env.STS_ROLE_ARN,
   stsRoleSessionName: process.env.STS_ROLE_SESSION_NAME || 'firmware-upload-session',
+  // 客户端超时（毫秒），默认5分钟
+  timeout: Number(process.env.OSS_TIMEOUT_MS || 300000),
 };
 
 // 验证必要的OSS环境变量

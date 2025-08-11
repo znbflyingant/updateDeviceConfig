@@ -159,6 +159,7 @@ function createOssClient() {
     accessKeySecret: OSS_CONFIG.accessKeySecret,
     bucket: OSS_CONFIG.bucket,
     authorizationV4: true,
+    timeout: OSS_CONFIG.timeout || 300000,
   };
   // if (OSS_CONFIG.endpoint) {
   //   options.endpoint = OSS_CONFIG.endpoint; // 例如 https://oss-cn-shenzhen.aliyuncs.com
