@@ -143,6 +143,7 @@ app.use('/api/', limiter);
 const { OSS_CONFIG, getStsToken, validateFileType, validateFileSize, buildFileUrl } = require('./oss-config');
 const multer = require('multer');
 const OSS = require('ali-oss');
+const { Readable } = require('stream');
 const HuaweiRemoteConfigAPI = require('./huawei-remote-config-api.js');
 // 不在上传接口内直接更新华为云配置，前端单独调用 /api/huawei/update-config
 
@@ -280,7 +281,9 @@ app.post('/api/oss/upload-batch', handleUploadArray('files'), async (req, res) =
         const md5 = md5s[i] || '';
         const originalName = f.originalname || `file_${i}`;
         const keyBody = keys[i];
-        const putResult = await client.put(`${keyBody}/${originalName}`, f.buffer, { headers });
+        // 使用可读流改为流式上传
+        const stream = Readable.from(f.buffer);
+        const putResult = await client.putStream(`${keyBody}/${originalName}`, stream, { headers });
         const cdnBase = (process.env.CDN_BASE_URL||'')
         const url = `${cdnBase}/${putResult.name}`
         return { originalName, md5, url };

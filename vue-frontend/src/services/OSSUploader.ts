@@ -62,10 +62,10 @@ class OSSUploader {
     const resp = await axios.post<ApiResponse>(uploadUrl, form, {
       // 注意：不要手动设置 Content-Type，浏览器会自动附带 boundary
       onUploadProgress: (evt) => {
-        if (onProgress && evt.total) {
-          const percentage = Math.round((evt.loaded / evt.total) * 100)
-          onProgress({ percentage, status: 'uploading', message: `正在上传... ${percentage}%` })
-        }
+        // if (onProgress && evt.total) {
+        //   const percentage = Math.round((evt.loaded / evt.total) * 100)
+        //   onProgress({ percentage, status: 'uploading', message: `正在上传... ${percentage}%` })
+        // }
       }
     })
     if (!resp.data.success || !resp.data.data) throw new Error(resp.data.message || '上传失败')
