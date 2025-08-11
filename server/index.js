@@ -282,17 +282,47 @@ app.post('/api/oss/upload-batch', handleUploadArray('files'), async (req, res) =
     const { version, updateLog } = req.body;
 
     const client = createOssClient();
+    // 为大文件上传设置更长的 HTTP keep-alive/请求超时（仅对 Node 端上传有效）
+    try {
+      const http = require('http');
+      const https = require('https');
+      const keepAliveMs = Number(process.env.HTTP_KEEP_ALIVE_MS || 120000);
+      const headersTimeoutMs = Number(process.env.HTTP_HEADERS_TIMEOUT_MS || 130000);
+      const requestTimeoutMs = Number(process.env.HTTP_REQUEST_TIMEOUT_MS || 0);
+      if (http.globalAgent) {
+        http.globalAgent.keepAlive = true;
+        http.globalAgent.keepAliveMsecs = keepAliveMs;
+        http.globalAgent.maxSockets = 100;
+        http.globalAgent.maxFreeSockets = 10;
+      }
+      if (https.globalAgent) {
+        https.globalAgent.keepAlive = true;
+        https.globalAgent.keepAliveMsecs = keepAliveMs;
+        https.globalAgent.maxSockets = 100;
+        https.globalAgent.maxFreeSockets = 10;
+      }
+      if (typeof server !== 'undefined' && server.setTimeout) {
+        server.headersTimeout = headersTimeoutMs;
+        server.requestTimeout = requestTimeoutMs;
+      }
+    } catch {}
     const toUpdateContent = { version, updateLog };
     const uploads = await Promise.all(
       files.map(async (f, i) => {
         const md5 = md5s[i] || '';
         const originalName = f.originalname || `file_${i}`;
         const keyBody = keys[i];
-        // 使用可读流改为流式上传
-        const stream = Readable.from(f.buffer);
-        const putResult = await client.putStream(`${keyBody}/${originalName}`, stream, { headers });
-        const cdnBase = (process.env.CDN_BASE_URL||'')
-        const url = `${cdnBase}/${putResult.name}`
+        // 使用分片上传，提升大文件稳定性
+        const objectKeyFull = `${keyBody}/${originalName}`;
+        const mOptions = {
+          partSize: Number(process.env.OSS_PART_SIZE_MB || 1) * 1024 * 1024,
+          parallel: Number(process.env.OSS_PARALLEL || 4),
+          headers,
+          timeout: OSS_CONFIG.timeout || 300000,
+        };
+        const mres = await client.multipartUpload(objectKeyFull, f.buffer, mOptions);
+        const cdnBase = (process.env.CDN_BASE_URL||'');
+        const url = `${cdnBase}/${mres.name}`
         return { originalName, md5, url };
       })
     );
