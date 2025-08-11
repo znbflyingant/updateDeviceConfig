@@ -32,6 +32,22 @@ const logger = {
 
 const app = express();
 const PORT = Number(process.env.PORT || 8080);
+// 运行在代理之后（如 Railway/Heroku），需要信任代理头以正确识别客户端IP
+(() => {
+  const raw = process.env.TRUST_PROXY;
+  let trustValue;
+  if (raw === undefined || raw === null || raw === '') {
+    trustValue = 1; // 默认信任一层代理
+  } else if (raw === 'true') {
+    trustValue = true;
+  } else if (raw === 'false') {
+    trustValue = false;
+  } else {
+    const n = Number(raw);
+    trustValue = Number.isNaN(n) ? 1 : n;
+  }
+  app.set('trust proxy', trustValue);
+})();
 
 // 解析允许的跨域源
 function parseAllowedOrigins() {

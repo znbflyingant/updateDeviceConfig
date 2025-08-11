@@ -5,6 +5,7 @@
 NODE_ENV=production
 PORT=3001
 FRONTEND_URL=https://app.example.com
+TRUST_PROXY=1
 
 # OSS
 OSS_REGION=oss-cn-shenzhen
