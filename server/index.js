@@ -46,20 +46,39 @@ function parseAllowedOrigins() {
 const allowedOrigins = parseAllowedOrigins();
 logger.debug('CORS allowed origins parsed', { allowedOrigins });
 
+// 通配支持：允许配置如 https://*.vercel.app
+function isOriginAllowed(origin, whitelist) {
+  if (!origin) return true;
+  if (!Array.isArray(whitelist) || whitelist.length === 0) return true;
+  if (whitelist.includes(origin)) return true;
+  return whitelist.some((item) => {
+    if (!item.includes('*')) return false;
+    try {
+      const escaped = item
+        .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\\\*/g, '[^.]+');
+      const re = new RegExp(`^${escaped}$`);
+      return re.test(origin);
+    } catch {
+      return false;
+    }
+  });
+}
+
 // 中间件配置
 app.use(helmet());
 app.use(compression());
 app.use(morgan('combined'));
-app.use(cors({
+const corsOptions = {
   origin: (origin, callback) => {
-    // 允许无来源的请求（如移动端/同源请求）
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.length === 0) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (isOriginAllowed(origin, allowedOrigins)) return callback(null, true);
     return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true
-}));
+};
+app.use(cors(corsOptions));
+// 处理预检请求（OPTIONS）
+app.options('*', cors(corsOptions));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
