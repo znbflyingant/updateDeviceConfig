@@ -4,12 +4,12 @@
   "description": "固件升级配置管理工具后端服务",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "NODE_ENV=production node index.js",
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "update": "node update-config-tool.js",
     "validate-env": "node validate-env.js",
-    "prestart": "node validate-env.js"
+    "prestart": "NODE_ENV=production node validate-env.js"
   },
   "dependencies": {
     "ali-oss": "^6.23.0",

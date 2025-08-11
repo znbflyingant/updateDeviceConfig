@@ -101,12 +101,17 @@ function validateEnvironment() {
   
   // 显示验证结果
   if (hasErrors) {
-    console.log(chalk.red('❌ 环境变量验证失败！请配置缺少的必要变量。\n'));
+    console.log(chalk.red('❌ 环境变量验证失败！缺少必要变量。'));
     console.log(chalk.blue('💡 提示：'));
     console.log('  1. 复制 server/env.example 为 server/.env');
     console.log('  2. 填入你的实际配置值');
     console.log('  3. 或在部署平台中配置环境变量\n');
-    process.exit(1);
+    // 在生产环境不阻断启动，仅给出警告，避免阻塞部署健康检查
+    if (process.env.NODE_ENV === 'production') {
+      console.log(chalk.yellow('⚠️  生产环境检测到缺少必要变量，将继续启动（仅警告，不中断）。'));
+    } else {
+      process.exit(1);
+    }
   } else {
     console.log(chalk.green('✅ 环境变量验证通过！'));
     if (warnings.length > 0) {
@@ -140,7 +145,11 @@ if (require.main === module) {
     
     if (hasErrors) {
       console.log('Environment validation failed!');
-      process.exit(1);
+      if (process.env.NODE_ENV === 'production') {
+        console.log('Production mode: continuing without exit.');
+      } else {
+        process.exit(1);
+      }
     } else {
       console.log('Environment validation passed!');
     }

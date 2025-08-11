@@ -31,7 +31,7 @@ const logger = {
 };
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = Number(process.env.PORT || 8080);
 
 // 解析允许的跨域源
 function parseAllowedOrigins() {
@@ -82,6 +82,11 @@ app.options('*', cors(corsOptions));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// 简单健康检查（平台常用）
+app.get('/health', (req, res) => {
+  res.status(200).send('ok');
+});
+
 // 异步路由包装器与错误构造器
 const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
@@ -128,13 +133,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// 限流配置
+// 限流配置（跳过健康检查）
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15分钟
-  max: 100, // 限制每个IP 15分钟内最多100个请求
-  message: {
-    code: 429,
-    message: '请求过于频繁，请稍后再试'
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { code: 429, message: '请求过于频繁，请稍后再试' },
+  skip: (req) => {
+    const url = req.originalUrl || '';
+    const path = req.path || '';
+    return url.startsWith('/api/health') || path === '/health';
   }
 });
 app.use('/api/', limiter);
