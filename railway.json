@@ -3,10 +3,10 @@
   "rootDirectory": "server",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "npm install --omit=dev"
+    "buildCommand": "npm --prefix server install --omit=dev"
   },
   "deploy": {
-    "startCommand": "npm start",
+    "startCommand": "npm --prefix server start",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",
