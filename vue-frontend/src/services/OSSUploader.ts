@@ -69,8 +69,9 @@ class OSSUploader {
       }
     })
     if (!resp.data.success || !resp.data.data) throw new Error(resp.data.message || '上传失败')
-    let result = resp.data?.data?.result as string;
-    return result;
+    const toUpdateContent = (resp.data as any)?.data?.toUpdateContent as string
+    if (!toUpdateContent) throw new Error('服务未返回 toUpdateContent')
+    return toUpdateContent
   }
 }
 

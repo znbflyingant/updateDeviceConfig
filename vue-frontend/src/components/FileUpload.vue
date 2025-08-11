@@ -257,7 +257,7 @@ async function handleSubmit() {
     try {
       progressMsg.value = '正在更新远程配置...'
       
-      const rawBase = (import.meta.env as any).VITE_API_BASE_URL || 'http://localhost:3001';
+      const rawBase = (import.meta.env as any).VITE_API_BASE_URL;
       const base = rawBase.replace(/\/$/, '');
       const endsWithApi = /\/api$/i.test(base);
       const apiBase = endsWithApi ? base : `${base}/api`;
