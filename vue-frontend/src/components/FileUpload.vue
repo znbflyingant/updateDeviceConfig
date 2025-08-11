@@ -78,7 +78,6 @@ import { CloudUploadOutlined } from '@ant-design/icons-vue'
 import JSZip from 'jszip'
 import OSSUploader from '../services/OSSUploader'
 
-const CDN_BASE = (import.meta.env.VITE_CDN_BASE_URL || 'https://res-sz.tianpuyue.cn/client-res/lottie/tp-dev/device_upgrade').replace(/\/$/, '')
 
 const versionInput = ref('')
 const updateLog = ref('')
@@ -228,17 +227,17 @@ async function handleSubmit() {
     const uploadNames: string[] = []
     const uploadKeys: string[] = []
     const md5s: string[] = []
-
+    const ossBucket = (import.meta.env as any).VITE_OSS_BUCKET;
     if (espFile.value) {
       uploadFiles.push(espFile.value)
       uploadNames.push(espFile.value.name)
-      uploadKeys.push(`device_upgrade/${espFile.value.name}`)
+      uploadKeys.push(ossBucket)
       md5s.push(espMd5!)
     }
     if (zipInfo) {
       uploadFiles.push(zipInfo.blob)
       uploadNames.push(zipInfo.zipName)
-      uploadKeys.push(`device_upgrade/${zipInfo.zipName}`)
+      uploadKeys.push(ossBucket)
       md5s.push(zipInfo.md5.toUpperCase())
     }
 

@@ -234,56 +234,78 @@ const headers = {
   'x-oss-object-acl': 'private',
 };
 
-// 批量中转上传到 OSS（files[]）
-app.post('/api/oss/upload-batch', upload.array('files'), asyncHandler(async (req, res) => {
-  const files = req.files || [];
-  if (!files.length) throw createHttpError(400, '缺少文件');
+// 批量中转上传到 OSS（files[]） - 方案B：去掉 asyncHandler，自行兜底，避免重复响应
+function handleUploadArray(fieldName) {
+  return (req, res, next) => {
+    upload.array(fieldName)(req, res, (err) => {
+      if (err) {
+        if (res.headersSent) return;
+        return res.status(400).json({ success: false, message: err.message || '上传失败' });
+      }
+      next();
+    });
+  };
+}
 
-  let keys;
-  let md5s;
+app.post('/api/oss/upload-batch', handleUploadArray('files'), async (req, res) => {
   try {
-    keys = JSON.parse(req.body.keys || '[]');
-  } catch {
-    throw createHttpError(400, 'keys 解析失败，必须为 JSON 数组');
-  }
-  try {
-    md5s = JSON.parse(req.body.md5s || '[]');
-  } catch {
-    throw createHttpError(400, 'md5s 解析失败，必须为 JSON 数组');
-  }
+    const files = req.files || [];
+    if (!files.length) return res.status(400).json({ success: false, message: '缺少文件' });
 
-  if (!Array.isArray(keys) || keys.length !== files.length) {
-    throw createHttpError(400, 'keys 数量与文件数量不一致');
-  }
-  if (!Array.isArray(md5s) || md5s.length !== files.length) {
-    throw createHttpError(400, 'md5s 数量与文件数量不一致');
-  }
-
-  const { version, updateLog } = req.body;
-
-  const client = createOssClient();
-  const toUpdateContent = { version, updateLog };
-  const uploads = await Promise.all(files.map(async (f, i) => {
-    const md5 = md5s[i] || '';
-    const originalName = f.originalname || `file_${i}`;
-    const keyBody = keys[i];
-    const putResult = await client.put(keyBody, f.buffer, { headers });
-    const url = putResult.url;
-    return { originalName, md5, url };
-  }));
-
-  uploads.forEach(u => {
-    if (u.originalName.toLowerCase().endsWith('.bin')) {
-      toUpdateContent.espUrl = u.url;
-      toUpdateContent.espMd5 = u.md5;
-    } else {
-      toUpdateContent.clipZipUrl = u.url;
-      toUpdateContent.clipZipMd5 = u.md5;
+    let keys;
+    let md5s;
+    try {
+      keys = JSON.parse(req.body.keys || '[]');
+    } catch {
+      return res.status(400).json({ success: false, message: 'keys 解析失败，必须为 JSON 数组' });
     }
-  });
+    try {
+      md5s = JSON.parse(req.body.md5s || '[]');
+    } catch {
+      return res.status(400).json({ success: false, message: 'md5s 解析失败，必须为 JSON 数组' });
+    }
 
-  res.json({ success: true, data: { toUpdateContent: JSON.stringify(toUpdateContent) } });
-}));
+    if (!Array.isArray(keys) || keys.length !== files.length) {
+      return res.status(400).json({ success: false, message: 'keys 数量与文件数量不一致' });
+    }
+    if (!Array.isArray(md5s) || md5s.length !== files.length) {
+      return res.status(400).json({ success: false, message: 'md5s 数量与文件数量不一致' });
+    }
+
+    const { version, updateLog } = req.body;
+
+    const client = createOssClient();
+    const toUpdateContent = { version, updateLog };
+    const uploads = await Promise.all(
+      files.map(async (f, i) => {
+        const md5 = md5s[i] || '';
+        const originalName = f.originalname || `file_${i}`;
+        const keyBody = keys[i];
+        const putResult = await client.put(`${keyBody}/${originalName}`, f.buffer, { headers });
+        const cdnBase = (process.env.CDN_BASE_URL||'')
+        const url = `${cdnBase}/${putResult.name}`
+        return { originalName, md5, url };
+      })
+    );
+
+    uploads.forEach((u) => {
+      if (u.originalName.toLowerCase().endsWith('.bin')) {
+        toUpdateContent.espUrl = u.url;
+        toUpdateContent.espMd5 = u.md5;
+      } else {
+        toUpdateContent.clipZipUrl = u.url;
+        toUpdateContent.clipZipMd5 = u.md5;
+      }
+      
+    });
+
+    return res.json({ success: true, data: { toUpdateContent: JSON.stringify(toUpdateContent) } });
+  } catch (error) {
+    logger.error('批量中转上传失败', { 错误: error.message, 堆栈: error.stack });
+    if (res.headersSent) return;
+    return res.status(500).json({ success: false, message: error.message || '上传失败' });
+  }
+});
 
 // 更新华为云远程配置
 function loadHuaweiConfig() {
