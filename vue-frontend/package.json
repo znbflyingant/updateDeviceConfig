@@ -10,14 +10,14 @@
     "vercel-build": "npm run build"
   },
   "dependencies": {
-    "@ant-design/icons-vue": "^7.0.1",
-    "ant-design-vue": "^4.1.0",
-    "axios": "^1.6.0",
-    "crypto-js": "^4.2.0",
-    "jszip": "^3.10.1",
-    "pinia": "^2.1.7",
-    "vue": "^3.4.0",
-    "vue-router": "^4.2.5"
+    "@ant-design/icons-vue": "7.0.1",
+    "ant-design-vue": "4.1.0",
+    "axios": "1.6.0",
+    "crypto-js": "4.2.0",
+    "jszip": "3.10.1",
+    "pinia": "2.1.7",
+    "vue": "3.4.0",
+    "vue-router": "4.2.5"
   },
   "devDependencies": {
     "@types/crypto-js": "^4.2.1",
