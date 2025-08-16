@@ -183,6 +183,8 @@ function createOssClient() {
     accessKeySecret: OSS_CONFIG.accessKeySecret,
     bucket: OSS_CONFIG.bucket,
     authorizationV4: true,
+    secure: true,
+    endpoint: `https://${OSS_CONFIG.region}.aliyuncs.com`,
     timeout: OSS_CONFIG.timeout || 300000,
   };
   // if (OSS_CONFIG.endpoint) {
@@ -306,14 +308,12 @@ app.post('/api/oss/upload-batch', handleUploadArray('files'), async (req, res) =
       const headersTimeoutMs = Number(process.env.HTTP_HEADERS_TIMEOUT_MS || 130000);
       const requestTimeoutMs = Number(process.env.HTTP_REQUEST_TIMEOUT_MS || 0);
       if (http.globalAgent) {
-        http.globalAgent.keepAlive = true;
-        http.globalAgent.keepAliveMsecs = keepAliveMs;
+        http.globalAgent.keepAlive = false;
         http.globalAgent.maxSockets = 100;
         http.globalAgent.maxFreeSockets = 10;
       }
       if (https.globalAgent) {
-        https.globalAgent.keepAlive = true;
-        https.globalAgent.keepAliveMsecs = keepAliveMs;
+        https.globalAgent.keepAlive = false;
         https.globalAgent.maxSockets = 100;
         https.globalAgent.maxFreeSockets = 10;
       }
@@ -323,25 +323,58 @@ app.post('/api/oss/upload-batch', handleUploadArray('files'), async (req, res) =
       }
     } catch {}
     const toUpdateContent = { version, updateLog };
-    const uploads = await Promise.all(
-      files.map(async (f, i) => {
-        const md5 = md5s[i] || '';
-        const originalName = f.originalname || `file_${i}`;
-        const keyBody = keys[i];
-        // 使用分片上传，提升大文件稳定性
-        const objectKeyFull = `${keyBody}/${originalName}`;
-        const mOptions = {
-          partSize: Number(process.env.OSS_PART_SIZE_MB || 1) * 1024 * 1024,
-          parallel: Number(process.env.OSS_PARALLEL || 4),
-          headers,
-          timeout: OSS_CONFIG.timeout || 300000,
-        };
-        const mres = await client.multipartUpload(objectKeyFull, f.buffer, mOptions);
-        const cdnBase = (process.env.CDN_BASE_URL||'');
-        const url = `${cdnBase}/${mres.name}`
-        return { originalName, md5, url };
-      })
-    );
+    const uploads = [];
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      const md5 = md5s[i] || '';
+      const originalName = f.originalname || `file_${i}`;
+      const keyBody = keys[i];
+      const objectKeyFull = `${keyBody}/${originalName}`;
+
+      const useMultipart = String(process.env.OSS_MULTIPART_ENABLED || '').toLowerCase() === 'true';
+      let putName;
+      if (useMultipart) {
+        const partSize = Number(process.env.OSS_PART_SIZE_MB || 10) * 1024 * 1024;
+        const parallel = Number(process.env.OSS_PARALLEL || 1);
+        const baseOptions = { partSize, parallel, headers, timeout: OSS_CONFIG.timeout || 300000 };
+
+        async function multipartWithRetry(maxRetry) {
+          let lastErr;
+          for (let attempt = 1; attempt <= maxRetry; attempt++) {
+            try {
+              const freshClient = attempt === 1 ? client : createOssClient();
+              return await freshClient.multipartUpload(objectKeyFull, f.buffer, baseOptions);
+            } catch (err) {
+              lastErr = err;
+              if (attempt === maxRetry) break;
+              const jitter = Math.floor(Math.random() * 400);
+              const backoffMs = Math.min(1000 * attempt + jitter, 8000);
+              logger.error(`分片上传失败，第${attempt}次，将在${backoffMs}ms后重试`, { 错误: err && err.message });
+              await new Promise(r => setTimeout(r, backoffMs));
+            }
+          }
+          throw lastErr;
+        }
+
+        try {
+          const mres = await multipartWithRetry(Number(process.env.OSS_RETRY || 5));
+          putName = mres.name;
+        } catch (err) {
+          logger.error('分片上传失败，尝试回退为 putStream', { 错误: err && err.message, 文件: originalName });
+          const stream = Readable.from(f.buffer);
+          const pres = await client.putStream(objectKeyFull, stream, { headers });
+          putName = pres.name;
+        }
+      } else {
+        const stream = Readable.from(f.buffer);
+        const pres = await client.putStream(objectKeyFull, stream, { headers });
+        putName = pres.name;
+      }
+
+      const cdnBase = (process.env.CDN_BASE_URL || '');
+      const url = `${cdnBase}/${putName}`;
+      uploads.push({ originalName, md5, url });
+    }
 
     uploads.forEach((u) => {
       if (u.originalName.toLowerCase().endsWith('.bin')) {
@@ -693,7 +726,7 @@ app.listen(PORT, () => {
     健康检查: `GET /api/health`,
     STS令牌: `GET /api/oss/sts`,
     配置验证: `POST /api/config/validate`,
-    配置保存: `POST /api/config/save`,
+    配置保存: `/api/config/save`,
     配置历史: `GET /api/config/history`,
     上传完成: `POST /api/oss/upload-complete`
   });
@@ -721,4 +754,4 @@ process.on('SIGTERM', () => {
 process.on('SIGINT', () => {
   console.log('收到SIGINT信号，正在优雅关闭服务器...');
   process.exit(0);
-}); 
+});

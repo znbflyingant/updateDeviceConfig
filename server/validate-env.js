@@ -101,7 +101,7 @@ function validateEnvironment() {
   
   // 显示验证结果
   if (hasErrors) {
-    console.log(chalk.red('❌ 环境变量验证失败！缺少必要变量。'));
+w    console.log(chalk.red('❌ 环境变量验证失败！缺少必要变量。'));
     console.log(chalk.blue('💡 提示：'));
     console.log('  1. 复制 server/env.example 为 server/.env');
     console.log('  2. 填入你的实际配置值');
