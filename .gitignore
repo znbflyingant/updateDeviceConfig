@@ -260,4 +260,4 @@ config/local.json
 Thumbs.db
 .vercel
 
-*.package-lock.json
+package-lock.json
