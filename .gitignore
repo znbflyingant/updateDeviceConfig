@@ -259,3 +259,5 @@ config/local.json
 .DS_Store
 Thumbs.db
 .vercel
+
+*.package-lock.json
