@@ -76,11 +76,16 @@ OSS_TIMEOUT_MS=300000
 OSS_PART_SIZE_MB=8
 OSS_PARALLEL=4
 
-# 华为云（仅在使用 /api/huawei/update-config 时需要）
+# 华为云 Remote Config（双平台：Android + iOS）
+# 通用凭据
 # HUAWEI_CLIENT_ID=...
 # HUAWEI_CLIENT_SECRET=...
+# Android 平台
 # HUAWEI_PRODUCT_ID=...
 # HUAWEI_APP_ID=...
+# iOS 平台
+# HUAWEI_IOS_PRODUCT_ID=...
+# HUAWEI_IOS_APP_ID=...
 ```
 
 安装依赖并启动（开发/生产）：
@@ -110,6 +115,7 @@ curl -s http://127.0.0.1:3001/api/health | jq .
 ```bash
 cd /opt/updatebin/vue-frontend
 echo "VITE_API_BASE_URL=https://yourdomain.com" > .env.production
+echo "VITE_OSS_BUCKET=your-bucket" >> .env.production
 npm ci || npm i
 npm run build
 ```
@@ -160,6 +166,24 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ---
 
+### 6) 后端生产进程（PM2）
+项目已提供 `server/ecosystem.config.js`，可直接运行：
+```bash
+cd /opt/updatebin/server
+pm2 start ecosystem.config.js
+pm2 save && pm2 startup
+```
+
+---
+
+### 7) 新增接口说明（双平台更新）
+- `POST /api/huawei/update-config-both`
+  - body: `{ "key":"device_upgrade_info", "content": "{...字符串化配置...}" }`
+  - 响应：`{ success: true, data: { ios: { latest }, android: { latest } } }`
+  - 用途：同时更新 iOS 与 Android 的同名参数并返回两端最新值
+
+---
+
 ### 6) 快速验证清单（部署后）
 - 后端健康：`curl -s http://127.0.0.1:3001/api/health`
 - 前端首页：浏览器访问 `http://yourdomain.com`
@@ -169,7 +193,7 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ---
 
-### 7) 常见问题
+### 8) 常见问题
 - 依赖安装慢：已将 npm 源设置为 `https://registry.npmmirror.com`
 - CORS：生产推荐同域；如跨域，在 `server/.env` 配置 `ALLOWED_ORIGINS`
 - STS 报错：未配置 `STS_ROLE_ARN` 时请改用后端中转上传 `/api/oss/upload-batch`
