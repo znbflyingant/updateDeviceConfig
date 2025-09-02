@@ -72,16 +72,23 @@
       <div v-if="progressMsg" class="progress-msg">{{ progressMsg }}</div>
     </div>
 
-    <!-- 结果配置展示 -->
-    <div v-if="outputConfig" class="card">
-      <h3>生成的配置 JSON</h3>
-      <pre class="result-json">{{ JSON.stringify(outputConfig, null, 2) }}</pre>
+    <!-- 最新远程配置展示（iOS / Android） -->
+    <div v-if="latestIosShown || latestAndroidShown" class="card">
+      <h3>最新远程配置（Huawei Remote Config）</h3>
+      <div v-if="latestIosShown" style="margin-top: 8px;">
+        <h4>iOS</h4>
+        <pre class="result-json">{{ JSON.stringify(latestIosShown, null, 2) }}</pre>
+      </div>
+      <div v-if="latestAndroidShown" style="margin-top: 12px;">
+        <h4>Android</h4>
+        <pre class="result-json">{{ JSON.stringify(latestAndroidShown, null, 2) }}</pre>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { CloudUploadOutlined } from '@ant-design/icons-vue'
 import JSZip from 'jszip'
@@ -103,26 +110,12 @@ const mainboardFiles = ref<File[]>([])
 const submitting = ref(false)
 const progressMsg = ref('')
 const outputConfig = ref<any | null>(null)
+const latestIosShown = computed(() => outputConfig.value && (outputConfig.value as any).ios?.latest)
+const latestAndroidShown = computed(() => outputConfig.value && (outputConfig.value as any).android?.latest)
 const safeParseJSON = (val: any) => {
   if (!val) return null
   if (typeof val !== 'string') return val
   try { return JSON.parse(val) } catch { return val }
-}
-
-function buildHuaweiContent(local: any, batch: { files: Array<{ url: string; key: string }> }) {
-  // 合并原则：有上传就用新地址，否则保留 local 中的字段
-  const merged: any = { ...local }
-  if (Array.isArray(batch?.files)) {
-    for (const it of batch.files) {
-      const name = (it.key || '').split('/').pop() || ''
-      if (name.toLowerCase().endsWith('.zip')) {
-        merged.clipZipUrl = it.url || merged.clipZipUrl
-      } else if (name.toLowerCase().endsWith('.bin')) {
-        merged.espUrl = it.url || merged.espUrl
-      }
-    }
-  }
-  return merged
 }
 
 const triggerFileInput = (type: 'esp' | 'mb') => {
@@ -274,14 +267,18 @@ async function handleSubmit() {
       const base = rawBase.replace(/\/$/, '');
       const endsWithApi = /\/api$/i.test(base);
       const apiBase = endsWithApi ? base : `${base}/api`;
-      const res = await fetch(`${apiBase}/huawei/update-config`, {
+      const res = await fetch(`${apiBase}/huawei/update-config-both`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: 'device_upgrade_info', content: result })
       })
       const data = await res.json()
       if (data.success) {
-        outputConfig.value = { success: true, latest: safeParseJSON(data.data?.latest), data: data.data }
+        const parsed = {
+          ios: { latest: safeParseJSON(data.data?.ios?.latest) },
+          android: { latest: safeParseJSON(data.data?.android?.latest) }
+        }
+        outputConfig.value = { success: true, ...parsed, raw: data.data }
         message.success('华为云配置更新成功')
       } else {
         outputConfig.value = { success: false, error: data.message, data: data.data }

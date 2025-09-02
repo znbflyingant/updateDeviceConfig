@@ -422,6 +422,42 @@ app.post('/api/huawei/update-config', async (req, res) => {
   }
 });
 
+// 同时更新 iOS 与 Android 两套远程配置
+app.post('/api/huawei/update-config-both', async (req, res) => {
+  try {
+    const { key = 'device_upgrade_info', content } = req.body || {};
+    if (!content) {
+      return res.status(400).json({ success: false, message: 'content 不能为空' });
+    }
+
+    const cfgMod = require('./config.js');
+    const pair = typeof cfgMod.getHuaweiConfigs === 'function'
+      ? cfgMod.getHuaweiConfigs()
+      : { ios: cfgMod, android: cfgMod };
+
+    async function updateAndFetchLatest(cfg) {
+      const api = new HuaweiRemoteConfigAPI(cfg);
+      await api.getAccessToken();
+      const contentStr = typeof content === 'string' ? content : JSON.stringify(content);
+      await api.updateParameterByKey(key, contentStr);
+      const latestConfig = await api.queryConfiguration();
+      const updatedParam = latestConfig?.configItems?.find((it) => it.name === key);
+      const latestValue = updatedParam?.defaultValue?.value ?? updatedParam?.defaultValue ?? null;
+      return { latest: latestValue };
+    }
+
+    const [iosRes, androidRes] = await Promise.all([
+      updateAndFetchLatest(pair.ios),
+      updateAndFetchLatest(pair.android)
+    ]);
+
+    return res.json({ success: true, data: { ios: iosRes, android: androidRes } });
+  } catch (error) {
+    logger.error('更新双平台华为配置失败', { 错误: error.message, 堆栈: error.stack });
+    return res.status(500).json({ success: false, message: error.message || '更新失败' });
+  }
+});
+
 // 上传完成回调
 app.post('/api/oss/upload-complete', (req, res) => {
   try {

@@ -11,17 +11,23 @@ const config = {
     clientId: process.env.HUAWEI_CLIENT_ID,           // 客户端ID
     clientSecret: process.env.HUAWEI_CLIENT_SECRET,   // 客户端密钥
     
-    // 项目信息，可在 AppGallery Connect 控制台项目设置中找到
-    productId: process.env.HUAWEI_PRODUCT_ID,         // 产品ID
-    appId: process.env.HUAWEI_APP_ID,                 // 应用ID
+    // iOS 专用：优先读取 HUAWEI_IOS_*，兼容旧字段名
+    productId: process.env.HUAWEI_IOS_PRODUCT_ID || process.env.HUAWEI_PRODUCT_ID, // 产品ID
+    appId: process.env.HUAWEI_IOS_APP_ID || process.env.HUAWEI_APP_ID,             // 应用ID
     
     // API 基础URL，通常不需要修改
     baseUrl: process.env.HUAWEI_BASE_URL || 'https://connect-api.cloud.huawei.com'
 };
 
 // 验证必要的环境变量
-const requiredEnvVars = ['HUAWEI_CLIENT_ID', 'HUAWEI_CLIENT_SECRET', 'HUAWEI_PRODUCT_ID', 'HUAWEI_APP_ID'];
-const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+const requiredEnvVars = ['HUAWEI_CLIENT_ID', 'HUAWEI_CLIENT_SECRET'];
+const iosOrLegacyMissing = [];
+if (!process.env.HUAWEI_IOS_PRODUCT_ID && !process.env.HUAWEI_PRODUCT_ID) iosOrLegacyMissing.push('HUAWEI_IOS_PRODUCT_ID | HUAWEI_PRODUCT_ID');
+if (!process.env.HUAWEI_IOS_APP_ID && !process.env.HUAWEI_APP_ID) iosOrLegacyMissing.push('HUAWEI_IOS_APP_ID | HUAWEI_APP_ID');
+const missingVars = [
+    ...requiredEnvVars.filter(varName => !process.env[varName]),
+    ...iosOrLegacyMissing
+];
 
 if (missingVars.length > 0) {
     console.error('❌ 缺少必要的华为云环境变量:', missingVars.join(', '));
@@ -34,7 +40,26 @@ if (missingVars.length > 0) {
 
 // 导出配置
 if (typeof module !== 'undefined' && module.exports) {
+    // 导出默认配置（按 iOS 优先回退 Android）
     module.exports = config;
+    // 同时导出获取 iOS/Android 双配置的方法
+    module.exports.getHuaweiConfigs = function getHuaweiConfigs() {
+        const ios = {
+            clientId: process.env.HUAWEI_CLIENT_ID,
+            clientSecret: process.env.HUAWEI_CLIENT_SECRET,
+            productId: process.env.HUAWEI_IOS_PRODUCT_ID,
+            appId: process.env.HUAWEI_IOS_APP_ID,
+            baseUrl: process.env.HUAWEI_BASE_URL || 'https://connect-api.cloud.huawei.com'
+        };
+        const android = {
+            clientId: process.env.HUAWEI_CLIENT_ID,
+            clientSecret: process.env.HUAWEI_CLIENT_SECRET,
+            productId: process.env.HUAWEI_PRODUCT_ID,
+            appId: process.env.HUAWEI_APP_ID,
+            baseUrl: process.env.HUAWEI_BASE_URL || 'https://connect-api.cloud.huawei.com'
+        };
+        return { ios, android };
+    };
 }
 
 // 浏览器环境
