@@ -8,7 +8,7 @@
 
 const HuaweiRemoteConfigAPI = require('./huawei-remote-config-api.js');
 
-const key = "device_upgrade_info";
+const key = "device_upgrade_info_debug";
 
 // 加载配置
 let config;
