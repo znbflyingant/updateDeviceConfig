@@ -6,11 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:deploy": "npm run build && node ./scripts/copy-dist.mjs",
     "preview": "vite preview",
     "vercel-build": "npm run build",
     "nginx:reload": "bash ./scripts/restart-nginx.sh reload",
-    "nginx:restart": "bash ./scripts/restart-nginx.sh restart",
-    "params:export": "node ./scripts/export-params.mjs"
+    "nginx:restart": "bash ./scripts/restart-nginx.sh restart"
   },
   "dependencies": {
     "@ant-design/icons-vue": "7.0.1",
