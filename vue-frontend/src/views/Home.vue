@@ -3,7 +3,10 @@
     <div class="container">
       <!-- 页面头部 -->
       <div class="page-header">
-        <h1>🎯 固件升级配置管理工具</h1>
+        <h1>
+          🎯 固件升级配置管理工具
+          <span v-if="rcKey" class="rc-key-badge">{{ rcKey }}</span>
+        </h1>
         <p>支持ESP固件和主板升级包上传、配置生成、自动更新配置</p>
       </div>
 
@@ -22,7 +25,7 @@ import { ref } from 'vue'
 import { message } from 'ant-design-vue'
 import axios from 'axios'
 import FileUpload from '../components/FileUpload.vue'
-
+const rcKey = (import.meta.env as any).VITE_HUAWEI_RC_KEY || ''
 </script>
 
 <style scoped>
@@ -42,6 +45,18 @@ import FileUpload from '../components/FileUpload.vue'
   font-weight: 700;
   margin-bottom: 12px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.rc-key-badge {
+  display: inline-block;
+  margin-left: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #ff4d4f;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
 .page-header p {
