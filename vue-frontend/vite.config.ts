@@ -9,6 +9,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const devPort = Number(env.VITE_DEV_PORT || 3000)
   const apiProxyTarget = env.VITE_API_PROXY_TARGET || 'http://localhost:3001'
+  const pkg = require('./package.json')
+  const childProcess = require('child_process')
+  const commitHash = (() => {
+    try { return childProcess.execSync('git rev-parse --short HEAD').toString().trim() } catch { return 'unknown' }
+  })()
+  const buildTime = new Date().toISOString()
 
   return {
     plugins: [
@@ -52,6 +58,9 @@ export default defineConfig(({ mode }) => {
           }
         }
       }
+    },
+    define: {
+      __BUILD_INFO__: JSON.stringify({ appName: pkg.name, version: pkg.version, commit: commitHash, time: buildTime })
     }
   }
 })
