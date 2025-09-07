@@ -86,6 +86,9 @@ OSS_PARALLEL=4
 # iOS 平台
 # HUAWEI_IOS_PRODUCT_ID=...
 # HUAWEI_IOS_APP_ID=...
+# 参数键（推荐显式提供）
+# - 可通过 HUAWEI_RC_KEY 提供全局默认；若未设置且请求未传 key，将返回 400
+# HUAWEI_RC_KEY=
 ```
 
 安装依赖并启动（开发/生产）：
@@ -116,6 +119,8 @@ curl -s http://127.0.0.1:3001/api/health | jq .
 cd /opt/updatebin/vue-frontend
 echo "VITE_API_BASE_URL=https://yourdomain.com" > .env.production
 echo "VITE_OSS_BUCKET=your-bucket" >> .env.production
+# 若需要指定参数键，可显式设置
+# echo "VITE_HUAWEI_RC_KEY=device_upgrade_info_debug" >> .env.production
 npm ci || npm i
 npm run build
 ```

@@ -270,7 +270,10 @@ async function handleSubmit() {
       const res = await fetch(`${apiBase}/huawei/update-config-both`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'device_upgrade_info', content: result })
+        body: JSON.stringify({
+          ...( (import.meta.env as any).VITE_HUAWEI_RC_KEY ? { key: (import.meta.env as any).VITE_HUAWEI_RC_KEY } : {} ),
+          content: result
+        })
       })
       const data = await res.json()
       if (data.success) {

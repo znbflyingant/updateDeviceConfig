@@ -402,9 +402,13 @@ function loadHuaweiConfig() {
 
 app.post('/api/huawei/update-config', async (req, res) => {
   try {
-    const { key = 'device_upgrade_info', content } = req.body || {};
+    const { key: keyFromBody, content } = req.body || {};
+    const key = keyFromBody || process.env.HUAWEI_RC_KEY;
     if (!content) {
       return res.status(400).json({ success: false, message: 'content 不能为空' });
+    }
+    if (!key) {
+      return res.status(400).json({ success: false, message: 'key 不能为空（可通过请求体或 HUAWEI_RC_KEY 提供）' });
     }
     const cfg = loadHuaweiConfig();
     const api = new HuaweiRemoteConfigAPI(cfg);
@@ -425,9 +429,13 @@ app.post('/api/huawei/update-config', async (req, res) => {
 // 同时更新 iOS 与 Android 两套远程配置
 app.post('/api/huawei/update-config-both', async (req, res) => {
   try {
-    const { key = 'device_upgrade_info', content } = req.body || {};
+    const { key: keyFromBody, content } = req.body || {};
+    const key = keyFromBody || process.env.HUAWEI_RC_KEY;
     if (!content) {
       return res.status(400).json({ success: false, message: 'content 不能为空' });
+    }
+    if (!key) {
+      return res.status(400).json({ success: false, message: 'key 不能为空（可通过请求体或 HUAWEI_RC_KEY 提供）' });
     }
 
     const cfgMod = require('./config.js');

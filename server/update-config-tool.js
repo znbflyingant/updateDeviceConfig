@@ -8,7 +8,7 @@
 
 const HuaweiRemoteConfigAPI = require('./huawei-remote-config-api.js');
 
-const key = "device_upgrade_info_debug";
+const key = process.env.HUAWEI_RC_KEY || process.argv[2];
 
 // 加载配置
 let config;
@@ -26,6 +26,9 @@ async function updateConfig(content) {
     const api = new HuaweiRemoteConfigAPI(config);
     
     try {
+        if (!key) {
+            throw new Error('key 不能为空（请设置环境变量 HUAWEI_RC_KEY 或通过参数提供）');
+        }
         console.log(`🔄 正在更新配置: ${key}`);
         console.log(`📝 新内容: ${content}`);
       
