@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "vercel-build": "npm run build",
     "nginx:reload": "bash ./scripts/restart-nginx.sh reload",
-    "nginx:restart": "bash ./scripts/restart-nginx.sh restart"
+    "nginx:restart": "bash ./scripts/restart-nginx.sh restart",
+    "params:export": "node ./scripts/export-params.mjs"
   },
   "dependencies": {
     "@ant-design/icons-vue": "7.0.1",
