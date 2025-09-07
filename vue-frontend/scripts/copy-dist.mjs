@@ -12,7 +12,39 @@ async function exists(p) {
   try { await access(p, FS.F_OK); return true } catch { return false }
 }
 
+function parseEnvLines(text) {
+  const out = {}
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim()
+    if (!line || line.startsWith('#')) continue
+    const idx = line.indexOf('=')
+    if (idx === -1) continue
+    const key = line.slice(0, idx).trim()
+    let val = line.slice(idx + 1).trim()
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith('\'') && val.endsWith('\''))) {
+      val = val.slice(1, -1)
+    }
+    out[key] = val
+  }
+  return out
+}
+
+async function loadDotEnvIntoProcess() {
+  const dotenvPath = path.join(root, '.env')
+  try {
+    const { readFile } = await import('node:fs/promises')
+    const text = await readFile(dotenvPath, 'utf8')
+    const kv = parseEnvLines(text)
+    for (const [k, v] of Object.entries(kv)) {
+      if (process.env[k] === undefined) process.env[k] = v
+    }
+  } catch {
+    // ignore
+  }
+}
+
 async function main() {
+  await loadDotEnvIntoProcess()
   const target = process.env.DEPLOY_DIST_PATH || process.env.FRONTEND_DEPLOY_PATH
   if (!target) {
     console.error('❌ 未设置目标目录。请通过环境变量 DEPLOY_DIST_PATH（或 FRONTEND_DEPLOY_PATH）提供目标路径')
