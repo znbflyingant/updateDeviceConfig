@@ -2,7 +2,7 @@
   <div id="app">
     <RouterView />
     <div class="version-badge" v-if="buildInfo">
-      <span>{{ buildInfo.appName }} v{{ buildInfo.version }} ({{ buildInfo.commit }})</span>
+      <span>{{ buildInfo.appName }} v{{ buildInfo.version }} {{ buildInfo.time }} ({{ buildInfo.commit }})</span>
     </div>
   </div>
 </template>
