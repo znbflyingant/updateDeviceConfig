@@ -11,9 +11,12 @@
     "validate-env": "node validate-env.js",
     "prestart": "NODE_ENV=production node validate-env.js",
     "pm2:start": "pm2 start ecosystem.config.js",
-    "pm2:restart": "pm2 restart firmware-server --update-env",
-    "pm2:stop": "pm2 stop firmware-server",
-    "pm2:logs": "pm2 logs firmware-server --lines 200",
+    "pm2:restart:prod": "pm2 restart firmware-server-prod --update-env",
+    "pm2:restart:test": "pm2 restart firmware-server-test --update-env",
+    "pm2:stop:prod": "pm2 stop firmware-server-prod",
+    "pm2:stop:test": "pm2 stop firmware-server-test",
+    "pm2:logs:prod": "pm2 logs firmware-server-prod --lines 200",
+    "pm2:logs:test": "pm2 logs firmware-server-test --lines 200",
     "pm2:monit": "pm2 monit"
   },
   "dependencies": {

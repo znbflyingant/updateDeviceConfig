@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:test": "vite build --mode test",
     "build:deploy": "npm run build && node ./scripts/copy-dist.mjs",
+    "build:deploy:test": "npm run build:test && node ./scripts/copy-dist.mjs",
     "preview": "vite preview",
     "vercel-build": "npm run build",
     "nginx:reload": "bash ./scripts/restart-nginx.sh reload",
