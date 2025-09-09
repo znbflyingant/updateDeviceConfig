@@ -196,7 +196,8 @@ async function buildMainboardZip(versionNum: number): Promise<{ blob: Blob, zipN
     zip.file(f.name, arrayBuffer)
   }
   const zipBlob = await zip.generateAsync({ type: 'blob' })
-  const zipName = `Upgrade${versionNum}.zip`
+  const ts = Date.now()
+  const zipName = `Upgrade${versionNum}_${ts}.zip`
   // 计算MD5（大写）
   const md5 = await OSSUploader.calculateMD5(zipBlob as unknown as File)
   return { blob: zipBlob, zipName, md5 }
@@ -234,17 +235,31 @@ async function handleSubmit() {
     const uploadKeys: string[] = []
     const md5s: string[] = []
     const ossBucket = (import.meta.env as any).VITE_OSS_BUCKET;
+    const ts = Date.now()
+    const withTs = (name: string, timestamp: number) => {
+      const dot = name.lastIndexOf('.')
+      if (dot > 0) {
+        const base = name.slice(0, dot)
+        const ext = name.slice(dot)
+        return `${base}_${timestamp}${ext}`
+      }
+      return `${name}_${timestamp}`
+    }
     if (espFile.value) {
-      uploadFiles.push(espFile.value)
-      uploadNames.push(espFile.value.name)
+      const finalName = withTs(espFile.value.name, ts)
+      const renamedEsp = new File([espFile.value], finalName, { type: espFile.value.type })
+      uploadFiles.push(renamedEsp)
+      uploadNames.push(finalName)
       uploadKeys.push(ossBucket)
       md5s.push(espMd5!)
     }
     if (zipInfo) {
+      const zipMd5Upper = zipInfo.md5.toUpperCase()
+      // zip 名称已在 buildMainboardZip 内包含时间戳，这里直接使用
       uploadFiles.push(zipInfo.blob)
       uploadNames.push(zipInfo.zipName)
       uploadKeys.push(ossBucket)
-      md5s.push(zipInfo.md5.toUpperCase())
+      md5s.push(zipMd5Upper)
     }
 
     progressMsg.value = '正在上传文件...'
