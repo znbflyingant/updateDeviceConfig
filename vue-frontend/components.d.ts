@@ -7,10 +7,12 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    AAutoComplete: typeof import('ant-design-vue/es')['AutoComplete']
     AButton: typeof import('ant-design-vue/es')['Button']
     AForm: typeof import('ant-design-vue/es')['Form']
     AFormItem: typeof import('ant-design-vue/es')['FormItem']
     AInput: typeof import('ant-design-vue/es')['Input']
+    ASelect: typeof import('ant-design-vue/es')['Select']
     ASpace: typeof import('ant-design-vue/es')['Space']
     ATextarea: typeof import('ant-design-vue/es')['Textarea']
     FileUpload: typeof import('./src/components/FileUpload.vue')['default']

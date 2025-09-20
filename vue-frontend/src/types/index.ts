@@ -53,3 +53,10 @@ export interface StsToken {
   securityToken: string
   expiration: string
 } 
+
+export interface FrontendBuildInfo {
+  appName: string
+  version: string
+  commit: string
+  time: string
+}

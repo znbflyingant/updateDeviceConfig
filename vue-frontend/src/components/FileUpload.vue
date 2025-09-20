@@ -4,7 +4,12 @@
     <div class="version-form card">
       <a-form layout="vertical">
         <a-form-item label="版本号">
-          <a-input v-model:value="versionInput" style="width: 160px" placeholder="如 69" />
+          <a-auto-complete
+            v-model:value="versionInput"
+            :options="versionOptions"
+            style="width: 160px"
+            placeholder="如 69"
+          />
         </a-form-item>
         <a-form-item label="更新说明">
           <a-textarea
@@ -13,6 +18,16 @@
             placeholder="请填写更新说明"
             style="width: 620px"
           />
+          <div style="margin-top: 8px;">
+            <a-select
+              allow-clear
+              show-search
+              style="width: 620px"
+              :options="updateLogOptions"
+              placeholder="从历史选择一条更新说明（可搜索）"
+              @change="onPickUpdateLogHistory"
+            />
+          </div>
         </a-form-item>
       </a-form>
     </div>
@@ -88,15 +103,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { CloudUploadOutlined } from '@ant-design/icons-vue'
 import JSZip from 'jszip'
 import OSSUploader from '../services/OSSUploader'
+import { Env } from '../services/env'
 
 
 const versionInput = ref('')
 const updateLog = ref('')
+const versionOptions = ref<Array<{ value: string }>>([])
+const updateLogOptions = ref<Array<{ label: string, value: string }>>([])
+
+const HISTORY_MAX = 10
+const LS_KEYS = {
+  versions: 'updatebin_versions_history',
+  logs: 'updatebin_updatelog_history'
+}
+
+function loadHistory() {
+  try {
+    const v = JSON.parse(localStorage.getItem(LS_KEYS.versions) || '[]') as string[]
+    const l = JSON.parse(localStorage.getItem(LS_KEYS.logs) || '[]') as string[]
+    versionOptions.value = (v || []).map(x => ({ value: x }))
+    updateLogOptions.value = (l || []).map(x => ({ label: x, value: x }))
+  } catch {}
+}
+
+function saveHistory() {
+  try {
+    const v = versionInput.value.trim()
+    const l = updateLog.value.trim()
+    if (v) {
+      const arr = Array.from(new Set([v, ...versionOptions.value.map(x => x.value)])).slice(0, HISTORY_MAX)
+      versionOptions.value = arr.map(x => ({ value: x }))
+      localStorage.setItem(LS_KEYS.versions, JSON.stringify(arr))
+    }
+    if (l) {
+      const arr = Array.from(new Set([l, ...updateLogOptions.value.map(x => x.value)])).slice(0, HISTORY_MAX)
+      updateLogOptions.value = arr.map(x => ({ label: x, value: x }))
+      localStorage.setItem(LS_KEYS.logs, JSON.stringify(arr))
+    }
+  } catch {}
+}
+
+function onPickUpdateLogHistory(val: any, _option?: any) {
+  if (val != null) updateLog.value = String(val)
+}
+
+onMounted(loadHistory)
 
 const espInput = ref<HTMLInputElement>()
 const mbInput = ref<HTMLInputElement>()
@@ -263,13 +319,17 @@ async function handleSubmit() {
     }
 
     progressMsg.value = '正在上传文件...'
+    // 读取环境前缀并拼接到更新说明（若为空则不影响）
+    const prefix = Env.updatePrefix || ''
+    const finalUpdateLog = prefix ? `${prefix}${updateLog.value}` : updateLog.value
+
     const result = await OSSUploader.uploadViaServer(
       uploadFiles,
       uploadNames,
       uploadKeys,
       (p) => (progressMsg.value = p.message || ''),
       v.versionNum,
-      updateLog.value,
+      finalUpdateLog,
       md5s
     )
 
@@ -310,6 +370,8 @@ async function handleSubmit() {
     console.error(e)
     message.error(`上传失败: ${e?.message || e}`)
   } finally {
+    // 成功或失败都保存当前输入到历史（若为空则不保存）
+    saveHistory()
     submitting.value = false
     progressMsg.value = ''
   }

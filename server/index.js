@@ -6,7 +6,25 @@ const bodyParser = require('body-parser');
 const compression = require('compression');
 const morgan = require('morgan');
 const crypto = require('crypto');
-require('dotenv').config();
+// 按环境加载 .env 文件（优先 .env.<NODE_ENV>，否则回退 .env）
+(() => {
+  try {
+    const path = require('path');
+    const fs = require('fs');
+    const env = process.env.NODE_ENV || 'development';
+    const envPath = path.resolve(__dirname, `.env.${env}`);
+    const basePath = path.resolve(__dirname, '.env');
+    if (fs.existsSync(envPath)) {
+      require('dotenv').config({ path: envPath });
+    } else if (fs.existsSync(basePath)) {
+      require('dotenv').config({ path: basePath });
+    } else {
+      require('dotenv').config();
+    }
+  } catch {
+    require('dotenv').config();
+  }
+})();
 
 // 日志工具函数
 const logger = {
@@ -30,11 +48,13 @@ const logger = {
   }
 };
 
+const EnvConfig = require('./env-config');
+const envCfg = new EnvConfig();
 const app = express();
-const PORT = Number(process.env.PORT || 8080);
+const PORT = envCfg.port;
 // 运行在代理之后（如 Railway/Heroku），需要信任代理头以正确识别客户端IP
 (() => {
-  const raw = process.env.TRUST_PROXY;
+  const raw = envCfg.trustProxy;
   let trustValue;
   if (raw === undefined || raw === null || raw === '') {
     trustValue = 1; // 默认信任一层代理
@@ -51,12 +71,7 @@ const PORT = Number(process.env.PORT || 8080);
 
 // 解析允许的跨域源
 function parseAllowedOrigins() {
-  const raw = process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || '';
-  const list = raw
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean);
-  return list;
+  return envCfg.parseAllowedOrigins();
 }
 
 const allowedOrigins = parseAllowedOrigins();

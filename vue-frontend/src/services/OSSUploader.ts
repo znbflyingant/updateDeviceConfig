@@ -1,6 +1,7 @@
 import axios from 'axios'
 import CryptoJS from 'crypto-js'
 import type { UploadProgress, StsToken, ApiResponse } from '../types'
+import { Env } from './env'
 
 class OSSUploader {
   private rawBase = (import.meta.env as any).VITE_API_BASE_URL
@@ -8,11 +9,7 @@ class OSSUploader {
   // 规范化 API 基础地址：
   // - 支持传入根地址（如 http://localhost:3001）
   // - 也支持直接传入包含 /api 的地址（如 https://api.example.com/api）
-  private getApiBase(): string {
-    const base = this.rawBase.replace(/\/$/, '')
-    const endsWithApi = /\/api$/i.test(base)
-    return endsWithApi ? base : `${base}/api`
-  }
+  private getApiBase(): string { return Env.apiBase }
 
   // 计算文件MD5（返回大写十六进制）
   async calculateMD5(file: Blob): Promise<string> {
