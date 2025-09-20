@@ -71,8 +71,14 @@ jspm_packages/
 # Server environment files
 server/.env
 server/.env.local
-server/.env.production
-server/.env.development
+server/.env.prod
+server/.env.gray
+
+vue-frontend/.env
+vue-frontend/.env.local
+vue-frontend/.env.prod
+vue-frontend/.env.gray
+
 
 # Config files with sensitive data
 server/config.local.js
